@@ -1,0 +1,55 @@
+/*
+ * ContextFlow design tokens.
+ * Imported from index.css (after `@import "tailwindcss"`) so the tokens below
+ * become Tailwind utilities: bg-brand, text-ink, border-line, shadow-card, ...
+ * Names are intentionally namespaced so they never collide with shadcn variables.
+ */
+@theme {
+  --color-brand: #2459a6;
+  --color-brand-hover: #1d4a8a;
+  --color-brand-soft: #eaf0f9;
+
+  --color-canvas: #f7f8fa;
+  --color-surface: #ffffff;
+
+  --color-success: #16a37a;
+  --color-success-soft: #e6f6f0;
+  --color-success-ink: #0e7a5b;
+
+  --color-warning: #e9a23b;
+  --color-warning-soft: #fdf3e1;
+  --color-warning-ink: #9a5b0b;
+
+  --color-danger: #dc5252;
+  --color-danger-soft: #fceded;
+  --color-danger-ink: #b03a3a;
+
+  --color-ink: #202b3c;
+  --color-ink-muted: #64748b;
+  --color-line: #e5e7eb;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+
+  --shadow-card: 0 1px 2px rgb(16 24 40 / 0.04), 0 1px 3px rgb(16 24 40 / 0.06);
+  --shadow-popover: 0 8px 24px rgb(16 24 40 / 0.12), 0 2px 6px rgb(16 24 40 / 0.06);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+}
