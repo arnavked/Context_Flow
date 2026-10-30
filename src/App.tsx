@@ -8,15 +8,18 @@ import Meetings from '@/pages/Meetings'
 import RiskRadar from '@/pages/RiskRadar'
 import Settings from '@/pages/Settings'
 import WorkTransfers from '@/pages/WorkTransfers'
+import MeetingDetail from '@/pages/MeetingDetail'
+import { MeetingsProvider } from '@/context/MeetingsContext'
 
 export default function App() {
   return (
-    <BrowserRouter>
+    <MeetingsProvider><BrowserRouter>
       <Routes>
         <Route element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/meetings" element={<Meetings />} />
+          <Route path="/meetings/:meetingId" element={<MeetingDetail />} />
           <Route path="/action-items" element={<ActionItems />} />
           <Route path="/work-transfers" element={<WorkTransfers />} />
           <Route path="/knowledge" element={<KnowledgeBase />} />
@@ -26,6 +29,6 @@ export default function App() {
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Route>
       </Routes>
-    </BrowserRouter>
+    </BrowserRouter></MeetingsProvider>
   )
 }

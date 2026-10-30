@@ -1,26 +1,29 @@
-import { CalendarDays } from 'lucide-react'
-import { PlaceholderPage } from '@/components/common/PlaceholderPage'
+import { useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
+import { CalendarDays, Plus, Search } from 'lucide-react'
+import { Card } from '@/components/common/Card'
+import { Badge } from '@/components/common/Badge'
+import { useMeetings } from '@/context/MeetingsContext'
+
+type Filter = 'All' | 'Upcoming' | 'Completed'
+const field = 'w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-sm text-ink placeholder:text-ink-muted'
+const label = 'mb-1.5 block text-sm font-medium text-ink'
 
 export default function Meetings() {
-  return (
-    <PlaceholderPage
-      icon={CalendarDays}
-      title="Meetings"
-      description="Schedule meetings, capture notes and keep a searchable record of every discussion. Creating and managing meetings isn't built yet."
-      features={[
-        {
-          title: 'Meeting management',
-          description: 'Create meetings, invite participants and track attendance in one place.',
-        },
-        {
-          title: 'AI meeting summaries',
-          description: 'Generate a recap with the key decisions after each meeting.',
-        },
-        {
-          title: 'Action item extraction',
-          description: 'Turn discussion points into assigned tasks automatically.',
-        },
-      ]}
-    />
-  )
+  const { meetings, addMeeting } = useMeetings()
+  const navigate = useNavigate()
+  const [filter, setFilter] = useState<Filter>('All'); const [query, setQuery] = useState(''); const [creating, setCreating] = useState(false)
+  const [title, setTitle] = useState(''); const [startsAt, setStartsAt] = useState(''); const [type, setType] = useState('Team Meeting'); const [people, setPeople] = useState(''); const [agenda, setAgenda] = useState(''); const [transcript, setTranscript] = useState(''); const [inputKind, setInputKind] = useState<'transcript' | 'notes' | null>(null); const [fileName, setFileName] = useState('')
+  const visible = useMemo(() => meetings.filter((meeting) => (filter === 'All' || (filter === 'Upcoming' ? Date.parse(meeting.startsAt) >= Date.now() : Date.parse(meeting.startsAt) < Date.now())) && `${meeting.title} ${meeting.type} ${meeting.participants.join(' ')}`.toLowerCase().includes(query.toLowerCase())), [meetings, filter, query])
+  const onFile = async (file?: File) => { if (!file) return; setFileName(file.name); if (file.name.toLowerCase().endsWith('.txt')) { setTranscript(await file.text()); setInputKind('transcript') } }
+  const submit = (event: React.FormEvent<HTMLFormElement>) => { event.preventDefault(); const created = addMeeting({ title: title.trim(), startsAt, type: type as 'Team Meeting', participants: people.split(',').map((person) => person.trim()).filter(Boolean), agenda: agenda.trim(), transcript, transcriptKind: inputKind ?? (fileName ? 'file' : null), summary: '', decisions: [], actionItems: [] }); navigate(`/meetings/${created.id}`) }
+  return <div className="space-y-6">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"><div><h1 className="text-2xl font-semibold tracking-tight text-ink">Meetings</h1><p className="mt-1 text-sm text-ink-muted">Schedule discussions and keep their context together.</p></div><button onClick={() => setCreating((value) => !value)} className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-hover"><Plus size={17}/>Create Meeting</button></div>
+    <Card className="p-4"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div className="flex gap-1">{(['All','Upcoming','Completed'] as const).map((item) => <button key={item} onClick={() => setFilter(item)} className={`rounded-lg px-3 py-2 text-sm ${filter === item ? 'bg-brand-soft font-medium text-brand' : 'text-ink-muted hover:bg-canvas'}`}>{item}</button>)}</div><label className="relative block sm:w-72"><Search className="absolute left-3 top-2.5 size-4 text-ink-muted"/><input className={`${field} pl-9`} placeholder="Search meetings" value={query} onChange={(event) => setQuery(event.target.value)}/></label></div></Card>
+    {creating && <Card className="p-5 sm:p-6"><h2 className="mb-5 text-lg font-semibold">Create a meeting</h2><form onSubmit={submit} className="grid gap-4 sm:grid-cols-2"><label><span className={label}>Meeting title</span><input required className={field} value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Sprint planning"/></label><label><span className={label}>Date and time</span><input required type="datetime-local" className={field} value={startsAt} onChange={(event) => setStartsAt(event.target.value)}/></label><label><span className={label}>Meeting type</span><select className={field} value={type} onChange={(event) => setType(event.target.value)}>{['Team Meeting','Project Review','Sprint Planning','Client Meeting','Technical Discussion','Other'].map((item) => <option key={item}>{item}</option>)}</select></label><label><span className={label}>Participants</span><input className={field} value={people} onChange={(event) => setPeople(event.target.value)} placeholder="Names separated by commas"/></label><label className="sm:col-span-2"><span className={label}>Agenda</span><textarea rows={3} className={field} value={agenda} onChange={(event) => setAgenda(event.target.value)} placeholder="Topics to discuss"/></label>
+      <fieldset className="sm:col-span-2"><legend className={label}>Meeting content</legend><div className="mb-3 flex flex-wrap gap-2">{(['transcript','notes'] as const).map((kind) => <button type="button" key={kind} onClick={() => setInputKind(kind)} className={`rounded-lg border px-3 py-2 text-sm ${inputKind === kind ? 'border-brand bg-brand-soft text-brand' : 'border-line text-ink-muted'}`}> {kind === 'transcript' ? 'Paste transcript' : 'Manual notes'}</button>)}</div>{inputKind && <textarea rows={5} className={field} value={transcript} onChange={(event) => setTranscript(event.target.value)} placeholder={inputKind === 'transcript' ? 'Paste the original transcript here…' : 'Write meeting notes here…'}/>}<div className="mt-3"><input type="file" accept=".txt,.pdf,text/plain,application/pdf" onChange={(event) => void onFile(event.target.files?.[0])} className="block w-full text-sm text-ink-muted file:mr-3 file:rounded-lg file:border-0 file:bg-brand-soft file:px-3 file:py-2 file:font-medium file:text-brand"/>{fileName && <p className="mt-1 text-xs text-ink-muted">Selected: {fileName}{fileName.toLowerCase().endsWith('.pdf') ? ' — PDF selected; text extraction is not available.' : ' — TXT contents loaded.'}</p>}</div></fieldset>
+      <div className="flex justify-end gap-2 sm:col-span-2"><button type="button" onClick={() => setCreating(false)} className="rounded-lg border border-line px-4 py-2 text-sm">Cancel</button><button className="rounded-lg bg-brand px-4 py-2 text-sm font-medium text-white">Create meeting</button></div></form></Card>}
+    <div className="space-y-3">{visible.map((meeting) => <Link key={meeting.id} to={`/meetings/${meeting.id}`} className="block rounded-xl border border-line bg-surface p-5 shadow-card transition hover:border-brand/40"><div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold text-ink">{meeting.title}</h2><Badge tone="brand">{meeting.type}</Badge></div><p className="mt-1 flex items-center gap-2 text-sm text-ink-muted"><CalendarDays size={15}/>{new Date(meeting.startsAt).toLocaleString()} · {meeting.participants.length} participants</p></div><span className="text-sm font-medium text-brand">View details →</span></div></Link>)}{visible.length === 0 && <Card className="p-10 text-center text-sm text-ink-muted">{meetings.length ? 'No meetings match your search and filter.' : 'No meetings yet. Create one to get started.'}</Card>}</div>
+  </div>
 }
